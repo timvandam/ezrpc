@@ -1,6 +1,7 @@
 # ezrpc
 Easy to use RPC server/client
 
+![CI](https://github.com/timvandam/ezrpc/workflows/CI/badge.svg?branch=master)
 [![Inline docs](http://inch-ci.org/github/timvandam/ezrpc.svg?branch=master)](http://inch-ci.org/github/timvandam/ezrpc)
 [![Coverage Status](https://coveralls.io/repos/github/timvandam/ezrpc/badge.svg?branch=master)](https://coveralls.io/github/timvandam/ezrpc?branch=master)
 
