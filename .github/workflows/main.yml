@@ -29,4 +29,16 @@ jobs:
       run: yarn lint
 
     - name: Test
-      run: yarn test --ci
+      run: yarn test --ci --coverage
+
+    - name: Coveralls Parallel
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel: true
+
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true
