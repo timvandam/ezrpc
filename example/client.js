@@ -1,6 +1,13 @@
 const { Client } = require('../index')
 
-const { logMessage } = new Client('localhost', 1250).methods
+const client = new Client('localhost', 1250)
+const { logMessage } = client.methods
+
+// Handle (fatal) errors
+client.on('error', error => {
+  console.log(`Client error - ${error.message}`)
+  process.exit(0)
+})
 
 process.stdin.setEncoding('utf8')
 process.stdin.on('readable', () => {

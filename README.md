@@ -15,14 +15,14 @@ function helloWorld () {
 }
 
 server.addMethods(helloWorld)
-
-
+```
+```javascript
 // client.js
 const { Client } = require('./')
 const { helloWorld } = new Client('localhost', 1250).methods
 
 helloWorld()
-  .then(() => console.log('helloWorld() called on server process'))
+  .then(() => console.log('helloWorld() was called on server process'))
 ```
 
 ## Installing
