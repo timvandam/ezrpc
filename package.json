@@ -1,6 +1,6 @@
 {
   "name": "ezrpc",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Easy promise-based RPC over TCP",
   "main": "index.js",
   "author": "Tim van Dam",
@@ -31,6 +31,9 @@
     "worker",
     "workers",
     "microservice",
-    "microservices"
+    "microservices",
+    "distributed",
+    "scalable",
+    "tcp"
   ]
 }
