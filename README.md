@@ -1,6 +1,8 @@
 # ezrpc
 Easy to use RPC server/client
 
+[![Inline docs](http://inch-ci.org/github/timvandam/ezrpc.svg?branch=master)](http://inch-ci.org/github/timvandam/ezrpc)
+
 ```javascript
 // server.js
 const { Server } = require('./')
