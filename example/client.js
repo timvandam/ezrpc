@@ -1,6 +1,7 @@
 const { Client } = require('../index')
 
-const { logMessage } = new Client('localhost', 1250).methods
+const client = new Client('localhost', 1250)
+const { logMessage } = client.methods
 
 process.stdin.setEncoding('utf8')
 process.stdin.on('readable', () => {
@@ -9,5 +10,6 @@ process.stdin.on('readable', () => {
   while ((chunk = process.stdin.read()) !== null) {
     logMessage(chunk.trim(), Date.now())
       .catch(error => console.log(`Could not send message - ${error}`))
+    process.exit(0)
   }
 })
