@@ -1,0 +1,26 @@
+{
+  "name": "ezrpc",
+  "version": "1.0.0",
+  "description": "Easy promise-based RPC over TCP",
+  "main": "index.js",
+  "author": "Tim van Dam",
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jest": "^23.8.2",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "jest": "^25.1.0",
+    "jsdoc": "^3.6.3"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest",
+    "doc": "jsdoc lib/* -r -R ./README.md -d ./jsdoc/"
+  },
+  "repository": "https://github.com/timvandam/ezrpc",
+  "license": "MIT"
+}
