@@ -2,6 +2,7 @@
 Easy to use RPC server/client
 
 [![Inline docs](http://inch-ci.org/github/timvandam/ezrpc.svg?branch=master)](http://inch-ci.org/github/timvandam/ezrpc)
+[![Coverage Status](https://coveralls.io/repos/github/timvandam/ezrpc/badge.svg?branch=master)](https://coveralls.io/github/timvandam/ezrpc?branch=master)
 
 ```javascript
 // server.js
