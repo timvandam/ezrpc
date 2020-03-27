@@ -51,5 +51,6 @@ $ npm test
 $ yarn install
 $ yarn test
 ```
+
 ## Examples
 An easy example can be found [here](./example). This example allows the client process to send text to the server process, which logs this text and the latency.
