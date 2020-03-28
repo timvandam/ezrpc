@@ -7,7 +7,7 @@ Easy to use RPC server/client
 
 ```javascript
 // server.js
-const { Server } = require('./')
+const { Server } = require('ezrpc')
 const server = new Server(1250) // run rpc server on port 1250
 
 function helloWorld () {
@@ -21,7 +21,7 @@ server.module.exports = {
 ```
 ```javascript
 // client.js
-const { Client } = require('./')
+const { Client } = require('ezrpc')
 const { helloWorld } = new Client('localhost', 1250).methods
 
 helloWorld()
