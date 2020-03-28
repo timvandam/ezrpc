@@ -14,7 +14,7 @@ function helloWorld () {
   console.log('Hello World!')
 }
 
-// Make helloWorld accessable by the remote client
+// Make helloWorld accessible by the remote client
 server.module.exports = {
   helloWorld
 }
