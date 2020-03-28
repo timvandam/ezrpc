@@ -7,8 +7,3 @@ server.module.exports = {
     console.log(msg, Date.now() - time, 'ms')
   }
 }
-/* This is equivalent to:
-  server.addMethods({ logMessage: () => { ... } }) -- this is used internally
-  server.addMethods(function logMessage () { ... })
-  server.methods.logMessage = () => { ... }
-*/
