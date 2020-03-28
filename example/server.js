@@ -8,7 +8,7 @@ server.module.exports = {
   }
 }
 /* This is equivalent to:
+  server.addMethods({ logMessage: () => { ... } }) -- this is used internally
   server.addMethods(function logMessage () { ... })
-  server.addMethods({ logMessage: () => { ... } })
   server.methods.logMessage = () => { ... }
 */
