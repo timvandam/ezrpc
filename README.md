@@ -1,5 +1,5 @@
 # ezrpc
-Easy to use RPC server/client
+Easy to use RPC server/client (+ load balancer)
 
 [![CI](https://github.com/timvandam/ezrpc/workflows/CI/badge.svg?branch=master)](https://github.com/timvandam/ezrpc/actions?query=workflow%3ACI)
 [![Inline docs](https://inch-ci.org/github/timvandam/ezrpc.svg?branch=master&style=shields)](https://inch-ci.org/github/timvandam/ezrpc)
