@@ -34,7 +34,7 @@ helloWorld()
 `$ yarn add ezrpc`
 
 ## Why?
-- Easily divide your load among multiple processes on multiple machines
+- Easily load-balance tasks among multiple processes on multiple machines
 - Can be used like a child process, but does not have to be spawned on every function call
 - ezrpc servers can be used in almost any language
 
