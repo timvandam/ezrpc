@@ -1,4 +1,4 @@
-const { Client } = require('../')
+const { Client } = require('../../')
 
 const client = new Client('localhost', 1250)
 const { logMessage } = client.methods

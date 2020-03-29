@@ -1,6 +1,6 @@
-const { Server } = require('../')
+const { Server } = require('../../')
 
-const server = new Server(1250)
+const server = new Server(1251)
 
 function logMessage (msg, time) {
   console.log(msg, Date.now() - time, 'ms')
