@@ -1,5 +1,5 @@
 # ezrpc
-Easy to use RPC server/client
+Easy to use RPC server/client (+ load balancer)
 
 [![CI](https://github.com/timvandam/ezrpc/workflows/CI/badge.svg?branch=master)](https://github.com/timvandam/ezrpc/actions?query=workflow%3ACI)
 [![Inline docs](https://inch-ci.org/github/timvandam/ezrpc.svg?branch=master&style=shields)](https://inch-ci.org/github/timvandam/ezrpc)
@@ -34,7 +34,7 @@ helloWorld()
 `$ yarn add ezrpc`
 
 ## Why?
-- Easily divide your load among multiple processes on multiple machines
+- Easily load-balance tasks among multiple processes on multiple machines
 - Can be used like a child process, but does not have to be spawned on every function call
 - ezrpc servers can be used in almost any language
 
@@ -60,4 +60,4 @@ $ yarn test
 ```
 
 ## Examples
-An easy example can be found [here](./example). This example allows the client process to send text to the server process, which logs this text and the latency.
+Some basic explanatory examples can be found [here](./examples). They currently include a simple master-child example where the master (client.js) calls methods on the child process (server.js), and an example where the LoadBalancer class is used to distribute calls among multiple servers.
