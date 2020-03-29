@@ -13,7 +13,8 @@ const serversToLoadBalance = [{
 const server = new LoadBalancer(serversToLoadBalance, 1250)
 
 // Your load balancer is already set up now!
-//
+// The function call to myMethod in client.js will be relayed
+// to the server that was defined in server.js (running on localhost:1251) 
 
 // This is completely optional!
 // If you do export methods they will not be relayed to a load balanced server
