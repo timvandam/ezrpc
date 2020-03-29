@@ -60,4 +60,4 @@ $ yarn test
 ```
 
 ## Examples
-An easy example can be found [here](./example). This example allows the client process to send text to the server process, which logs this text and the latency.
+Some basic explanatory examples can be found [here](./examples). They currently include a simple master-child example where the master (client.js) calls methods on the child process (server.js), and an example where the LoadBalancer class is used to distribute calls among multiple servers.
