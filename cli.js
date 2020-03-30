@@ -27,8 +27,6 @@ async function scanDirectory (directory) {
 }
 
 async function scanFile (file) {
-  // check if the file creates a new Server, new LoadBalancer, or new Client
-  console.log(file)
   const code = await fs.promises.readFile(file, { encoding: 'utf8' })
-  const node = parser.parse(code)
+  // TODO: check if the file creates a new Server, new LoadBalancer, or new Client
 }
