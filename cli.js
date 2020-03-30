@@ -2,16 +2,22 @@
 const fs = require('fs')
 const path = require('path')
 const precinct = require('precinct')
-
 const { Command } = require('commander')
+
 const build = new Command()
+
+let p
 
 build
   .command('build')
   .description('build your application as individual microservices')
   .option('-s, --source [source]', 'the source folder of your application', 'src')
   .option('-d, --destination [destination]', 'where to build to', 'build')
-  .action(({ source, destination }) => startBuild(source, destination))
+  .option('-p, --package [package file]', 'which package.json file to use to get dependency versions', 'package.json')
+  .action(({ source, destination, package: pkg }) => {
+    p = require(path.resolve(pkg))
+    startBuild(source, destination)
+  })
 
 build.parse(process.argv)
 
@@ -26,6 +32,7 @@ async function startBuild (source, destination) {
   const typecount = new Map()
   for (const [entrypoint, type] of entrypoints.entries()) {
     typecount.set(type, (typecount.get(type) || 0) + 1)
+    // TODO: name it ${server}, check for collisions
     buildMicroService(`${type}-${typecount.get(type)}.${path.basename(entrypoint, '.js')}`, entrypoint)
   }
 }
@@ -62,6 +69,8 @@ async function buildMicroService (name, entrypoint) {
   const root = path.resolve('build', name)
   await fs.promises.mkdir(root)
   await createPackageJson(name, root, entrypoint)
+  await fs.promises.mkdir(path.resolve(root, 'js'))
+  // TODO: createFiles(entryPoint)
 }
 
 async function createPackageJson (name, root, entrypoint) {
@@ -80,16 +89,15 @@ async function createPackageJson (name, root, entrypoint) {
   }, null, 2))
 }
 
-// TODO: get version from original package.json
 function getDependencies (file, res = {}, handledFiles = new Set()) {
   if (!file) return res
   if (handledFiles.has(file)) return res
   handledFiles.add(file)
   const nDeps = nodeDependencies.get(file)
-  console.log(nodeDependencies, file)
   if (nDeps) {
     nDeps.forEach(dep => {
-      res[dep] = 'latest'
+      if (p && p.dependencies) res[dep] = p.dependencies[dep]
+      res[dep] = res[dep] || 'latest'
     })
   }
   const deps = dependencies.get(file)
