@@ -38,6 +38,8 @@
     "load balancer"
   ],
   "dependencies": {
+    "@babel/parser": "^7.9.4",
+    "commander": "^5.0.0",
     "debug": "^4.1.1"
   }
 }
