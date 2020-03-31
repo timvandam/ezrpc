@@ -27,7 +27,8 @@ program
     })()
       .then(() => startBuild())
       .then(() => {
-        console.log(`Build succeeded in ${Date.now() - start} ms`)
+        console.log(`\nBuild succeeded in ${Date.now() - start} ms`)
+        process.exit(0)
       })
       .catch(error => {
         if (error.code === 'MODULE_NOT_FOUND') console.log('The provided package.json could not be found')
@@ -47,19 +48,16 @@ const modules = new Map() // maps path to { ...node_modules }
  * @returns {Promise} promise that resolves after all builds have completed
  */
 function startBuild () {
-  let start
+  const start = Date.now()
   return fs.promises.rmdir(path.resolve(destination), { recursive: true })
     .then(() => fs.promises.mkdir(path.resolve(destination)))
-    .then(() => { start = Date.now() })
     .then(() => scanDirectory(source))
     .then(() => console.log(`- Indexed file dependencies (${Date.now() - start} ms)`))
     .then(async () => {
-      const builds = []
       for (const [name, entrypoint] of entrypoints.entries()) {
-        console.log(`- Starting build for ${name}`)
-        builds.push(buildMicroService(name, entrypoint))
+        console.log(`\n- Starting build for ${name}`)
+        await buildMicroService(name, entrypoint)
       }
-      return Promise.all(builds)
     })
 }
 
