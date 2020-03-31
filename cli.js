@@ -24,7 +24,7 @@ program
         console.log(`Build succeeded in ${Date.now() - start} ms`)
       })
       .catch(err => {
-        console.log(`Build failed: ${err.stack}`)
+        console.log(`Build failed: ${err.message}`)
         process.exit(1)
       })
   })
@@ -40,17 +40,20 @@ const modules = new Map() // maps path to {node_modules}
 
 /**
  * Start build
+ * @returns {Promise} promise that resolves after all builds have completed
  */
-async function startBuild () {
-  await fs.promises.rmdir(path.resolve(destination), { recursive: true })
-  await fs.promises.mkdir(path.resolve(destination))
-  await scanDirectory(source)
-  const builds = []
-  for (const [name, entrypoint] of entrypoints.entries()) {
-    console.log(`- Starting build for ${name}`)
-    builds.push(buildMicroService(name, entrypoint))
-  }
-  return Promise.all(builds)
+function startBuild () {
+  return fs.promises.rmdir(path.resolve(destination), { recursive: true })
+    .then(() => fs.promises.mkdir(path.resolve(destination)))
+    .then(() => scanDirectory(source))
+    .then(() => {
+      const builds = []
+      for (const [name, entrypoint] of entrypoints.entries()) {
+        console.log(`- Starting build for ${name}`)
+        builds.push(buildMicroService(name, entrypoint))
+      }
+      return Promise.all(builds)
+    })
 }
 
 /**
@@ -60,7 +63,27 @@ async function startBuild () {
 async function scanDirectory (directory) {
   for await (const dirent of await fs.promises.opendir(directory)) {
     if (dirent.isDirectory()) await scanDirectory(path.resolve(directory, dirent.name))
-    else if (dirent.isFile()) await scanFile(path.resolve(directory, dirent.name))
+    else if (dirent.isFile()) {
+      const file = path.resolve(directory, dirent.name)
+      await scanFile(file)
+    }
+  }
+}
+
+/**
+ * Resolve an import
+ * @param {Strnig} file - the file in which the import occurs
+ * @param {String} imp - what is being imported
+ * @param {String} [impName=imp] - the name of what is being imported
+ * @throws {Error} when an error occurred
+ * @returns {String} path of where an import leads to
+ */
+function resolveImport (file, imp, impName = imp) {
+  try {
+    return require.resolve(imp)
+  } catch (error) {
+    if (error.code === 'MODULE_NOT_FOUND') throw new Error(`Import '${impName}' in ${file} could not be found`)
+    throw error
   }
 }
 
@@ -83,14 +106,14 @@ async function scanFile (file) {
   const directory = path.dirname(file)
   // Loop through this file's dependencies and map them in modules/dependencies
   fileDependencies.forEach(depName => {
-    const isNodeModule = !depName.match(/[\\/.]/) && (require.resolve(depName) === depName || require.resolve(depName).includes('/node_modules/'))
+    const isNodeModule = !depName.match(/[\\/.]/) && (resolveImport(file, depName) === depName || resolveImport(file, depName).includes('/node_modules/'))
     if (isNodeModule) {
       const knownModules = modules.get(file)
       if (knownModules) knownModules.add(depName)
       else modules.set(file, new Set([depName]))
     } else {
       // Set dependency of file
-      const depPath = require.resolve(path.resolve(directory, depName))
+      const depPath = resolveImport(file, path.resolve(directory, depName), depName)
       const knownDeps = dependencies.get(file)
       if (knownDeps) knownDeps.add(depPath)
       else dependencies.set(file, new Set([depPath]))
