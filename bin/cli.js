@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const { program } = require('commander')
 
-const getDependencies = code => Array.from(code.matchAll(/(?:require|import) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(e => e[1])
+const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?: *.+ *from *)?) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(e => e[1])
 
 let source
 let destination
@@ -146,7 +146,6 @@ async function buildMicroService (name, entrypoint) {
   await fs.promises.mkdir(root)
   await fs.promises.mkdir(js)
   const { requiredFiles, requiredModules } = discoverRequirements(entrypoint)
-  console.log(requiredFiles)
   await Promise.all([
     writeRequiredFiles(js, requiredFiles, entrypoint),
     writePackageJson(name, root, requiredModules)
