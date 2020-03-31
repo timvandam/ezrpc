@@ -32,10 +32,7 @@ program
 program.parse(process.argv)
 
 const entrypoints = new Map() // maps microservice names to entrypoint paths
-// TODO: merge dependencies & dependencyImports
-// Dependencies = fileName => new Set(fileName.import.values())
-const dependencies = new Map() // fileName => {paths}
-const dependencyImports = new Map() // fileName => (import => path)
+const dependencies = new Map() // fileName => (importName => path)
 const modules = new Map() // maps path to {node_modules}
 
 /**
@@ -115,16 +112,10 @@ async function scanFile (file) {
       if (knownModules) knownModules.add(depName)
       else modules.set(file, new Set([depName]))
     } else {
-      // Set dependency of file
       const depPath = resolveImport(file, path.resolve(directory, depName), depName)
-      const knownDeps = dependencies.get(file)
-      if (knownDeps) knownDeps.add(depPath)
-      else dependencies.set(file, new Set([depPath]))
-
-      // Set dependencyImports of a file
-      const knownImports = dependencyImports.get(file)
+      const knownImports = dependencies.get(file)
       if (knownImports) knownImports.set(depName, depPath)
-      else dependencyImports.set(file, new Map().set(depName, depPath))
+      else dependencies.set(file, new Map().set(depName, depPath))
     }
   })
 }
@@ -197,7 +188,7 @@ function writeRequiredFiles (location, requiredFiles, entrypoint) {
     tasks.push(
       fs.promises.readFile(oldPath, { encoding: 'utf8' })
         .then(code => {
-          const imps = dependencyImports.get(oldPath)
+          const imps = dependencies.get(oldPath)
           if (imps) {
             for (const [imp, impPath] of imps.entries()) {
               const newImpPath = fileLocations.get(impPath)
@@ -225,7 +216,7 @@ function discoverRequirements (file, handledFiles = new Set(), requiredFiles = n
   handledFiles.add(file)
 
   // Gather file requirements
-  const reqs = dependencies.get(file)
+  const reqs = new Set((dependencies.get(file) || new Map()).values())
   if (reqs) {
     reqs.forEach(req => {
       requiredFiles.add(req)
