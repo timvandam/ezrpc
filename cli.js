@@ -43,10 +43,13 @@ const modules = new Map() // maps path to {node_modules}
  * @returns {Promise} promise that resolves after all builds have completed
  */
 function startBuild () {
+  let start
   return fs.promises.rmdir(path.resolve(destination), { recursive: true })
     .then(() => fs.promises.mkdir(path.resolve(destination)))
+    .then(() => { start = Date.now() })
     .then(() => scanDirectory(source))
-    .then(() => {
+    .then(() => console.log(`- Indexed source files (${Date.now() - start} ms)`))
+    .then(async () => {
       const builds = []
       for (const [name, entrypoint] of entrypoints.entries()) {
         console.log(`- Starting build for ${name}`)
@@ -72,7 +75,7 @@ async function scanDirectory (directory) {
 
 /**
  * Resolve an import
- * @param {Strnig} file - the file in which the import occurs
+ * @param {String} file - the file in which the import occurs
  * @param {String} imp - what is being imported
  * @param {String} [impName=imp] - the name of what is being imported
  * @throws {Error} when an error occurred
@@ -154,7 +157,13 @@ async function writePackageJson (name, root, modules) {
     name,
     main: 'js/index.js',
     private: true,
-    dependencies
+    dependencies,
+    devDependencies: {
+      pm2: '^4.2.3'
+    },
+    scripts: {
+      cluster: 'pm2 start js/index -i max'
+    }
   }, null, 2))
 }
 
