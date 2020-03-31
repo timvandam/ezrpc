@@ -106,20 +106,34 @@ async function buildMicroService (name, entrypoint) {
   await fs.promises.mkdir(root)
   await fs.promises.mkdir(js)
   const { requiredFiles, requiredModules } = discoverRequirements(entrypoint)
-  const fileLocations = new Map() // oldPath => newPath
-  const writtenPaths = new Set() // {newPaths}
+  await writeRequiredFiles(js, requiredFiles, entrypoint)
+}
+
+/**
+ * Writes given files to a given location
+ * @param {String} location - location to write requiredFiles to
+ * @param {Set<String>} requiredFiles - set of paths to files to write
+ * @param {String} entrypoint - the entrypoint of this microservice
+ * @returns {Promise} promise that resolves after all files have been written
+ */
+function writeRequiredFiles (location, requiredFiles, entrypoint) {
+  const mainPath = path.resolve(location, 'index.js')
+  const fileLocations = new Map().set(entrypoint, mainPath) // oldPath => newPath
+  const writtenPaths = new Set([mainPath]) // {newPaths}
 
   // Allocate new file locations
   requiredFiles.forEach(file => {
-    let newLocation = fileLocations.get(file) || path.resolve(js, path.basename(file))
+    let newLocation = fileLocations.get(file) || path.resolve(location, path.basename(file))
     // Make sure the path has not been used yet
     let i = 0
     while (writtenPaths.has(newLocation)) {
-      newLocation = path.resolve(js, `${i++}-path.basename(file)`)
+      const ext = path.extname(file)
+      newLocation = path.resolve(location, `${path.basename(file, ext)}.${i++}${ext}`)
     }
     writtenPaths.add(newLocation)
     fileLocations.set(file, newLocation)
   })
+
   const tasks = []
   for (const [oldPath, newPath] of fileLocations.entries()) {
     tasks.push(
@@ -127,7 +141,6 @@ async function buildMicroService (name, entrypoint) {
         .then(code => {
           const imps = dependencyImports.get(oldPath)
           if (imps) {
-            // TODO: replace imports
             for (const [imp, impPath] of imps.entries()) {
               const newImpPath = fileLocations.get(impPath)
               const newImpName = `./${path.basename(newImpPath)}`
@@ -138,9 +151,7 @@ async function buildMicroService (name, entrypoint) {
         })
     )
   }
-  await Promise.all(tasks)
-  // TODO: write requiredFiles
-  // TODO: write entrypoint
+  return Promise.all(tasks)
 }
 
 /**
