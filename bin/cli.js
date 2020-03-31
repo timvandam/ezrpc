@@ -224,7 +224,7 @@ function discoverRequirements (file, handledFiles = new Set(), requiredFiles = n
     reqs.forEach(req => {
       requiredFiles.add(req)
       // Recursively discover more requirements
-      discoverRequirements(req, handledFiles, requiredFiles)
+      discoverRequirements(req, handledFiles, requiredFiles, requiredModules)
     })
   }
 
