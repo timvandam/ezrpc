@@ -51,7 +51,7 @@ function startBuild () {
     .then(() => fs.promises.mkdir(path.resolve(destination)))
     .then(() => { start = Date.now() })
     .then(() => scanDirectory(source))
-    .then(() => console.log(`- Indexed source files (${Date.now() - start} ms)`))
+    .then(() => console.log(`- Indexed file dependencies (${Date.now() - start} ms)`))
     .then(async () => {
       const builds = []
       for (const [name, entrypoint] of entrypoints.entries()) {
@@ -117,6 +117,9 @@ async function scanFile (file) {
     if (isNodeModule) {
       const isNative = resolveImport(file, depName) === depName
       if (isNative) return
+      const depParts = depName.split('/')
+      depName = depParts[0]
+      if (depName[0] === '@') depName += `/${depParts[1]}`
       const knownModules = modules.get(file)
       if (knownModules) knownModules.add(depName)
       else modules.set(file, new Set([depName]))
