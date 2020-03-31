@@ -18,10 +18,15 @@ program
     source = res.source
     destination = res.destination
     packageDependencies = require(path.resolve(res.package)).dependencies
-    startBuild().catch(err => {
-      console.log(`Build failed: ${err.stack}`)
-      process.exit(1)
-    })
+    const start = Date.now()
+    startBuild()
+      .then(() => {
+        console.log(`Build succeeded in ${Date.now() - start} ms`)
+      })
+      .catch(err => {
+        console.log(`Build failed: ${err.stack}`)
+        process.exit(1)
+      })
   })
 
 program.parse(process.argv)
@@ -40,9 +45,12 @@ async function startBuild () {
   await fs.promises.rmdir(path.resolve(destination), { recursive: true })
   await fs.promises.mkdir(path.resolve(destination))
   await scanDirectory(source)
+  const builds = []
   for (const [name, entrypoint] of entrypoints.entries()) {
-    buildMicroService(name, entrypoint)
+    console.log(`- Starting build for ${name}`)
+    builds.push(buildMicroService(name, entrypoint))
   }
+  return Promise.all(builds)
 }
 
 /**
@@ -101,12 +109,30 @@ async function scanFile (file) {
  * @param {String} entrypoint - path to the entrypoint of this microservice
  */
 async function buildMicroService (name, entrypoint) {
+  const start = Date.now()
   const root = path.resolve(destination, name)
   const js = path.resolve(root, 'js')
   await fs.promises.mkdir(root)
   await fs.promises.mkdir(js)
   const { requiredFiles, requiredModules } = discoverRequirements(entrypoint)
   await writeRequiredFiles(js, requiredFiles, entrypoint)
+  await writePackageJson(name, root, requiredModules)
+  console.log(`-- Build for ${name} succesful (${Date.now() - start} ms)`)
+}
+
+async function writePackageJson (name, root, modules) {
+  const dependencies = {}
+  modules.forEach(dependency => {
+    dependencies[dependency] = packageDependencies && packageDependencies[dependency]
+      ? packageDependencies[dependency]
+      : 'latest'
+  })
+  await fs.promises.writeFile(path.resolve(root, 'package.json'), JSON.stringify({
+    name,
+    main: 'js/index.js',
+    private: true,
+    dependencies
+  }, null, 2))
 }
 
 /**
