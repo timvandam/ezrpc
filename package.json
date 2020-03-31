@@ -22,6 +22,8 @@
     "doc": "jsdoc lib/* -r -R ./README.md -d ./jsdoc/"
   },
   "repository": "https://github.com/timvandam/ezrpc",
+  "bugs": "https://github.com/timvandam/ezrpc/issues",
+  "homepage": "https://github.com/timvandam/ezrpc#readme",
   "license": "MIT",
   "engines": {
     "node": ">= 8"
