@@ -44,8 +44,11 @@
   },
   "files": [
     "lib",
+    "bin",
     "LICENSE",
-    "README.md",
     "index.js"
-  ]
+  ],
+  "bin": {
+    "ezrpc": "./bin/cli.js"
+  }
 }
