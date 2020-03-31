@@ -115,6 +115,8 @@ async function scanFile (file) {
   fileDependencies.forEach(depName => {
     const isNodeModule = !depName.match(/^[\\/.]/) && (resolveImport(file, depName) === depName || resolveImport(file, depName).includes('/node_modules/'))
     if (isNodeModule) {
+      const isNative = resolveImport(file, depName) === depName
+      if (isNative) return
       const knownModules = modules.get(file)
       if (knownModules) knownModules.add(depName)
       else modules.set(file, new Set([depName]))
@@ -155,13 +157,7 @@ async function writePackageJson (name, root, modules) {
     name,
     main: 'js/index.js',
     private: true,
-    dependencies,
-    devDependencies: {
-      pm2: '^4.2.3'
-    },
-    scripts: {
-      cluster: 'pm2 start js/index -i max'
-    }
+    dependencies
   }, null, 2))
 }
 
