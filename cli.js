@@ -17,14 +17,17 @@ program
   .action(res => {
     source = res.source
     destination = res.destination
-    packageDependencies = require(path.resolve(res.package)).dependencies
-    const start = Date.now()
-    startBuild()
+    const start = Date.now();
+    (async () => {
+      packageDependencies = require(path.resolve(res.package)).dependencies
+    })()
+      .then(() => startBuild())
       .then(() => {
         console.log(`Build succeeded in ${Date.now() - start} ms`)
       })
-      .catch(err => {
-        console.log(`Build failed: ${err.message}`)
+      .catch(error => {
+        if (error.code === 'MODULE_NOT_FOUND') console.log('The provided package.json could not be found')
+        else console.log(`Build failed: ${error.message}`)
         process.exit(1)
       })
   })
