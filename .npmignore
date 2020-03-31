@@ -1,13 +1,1 @@
-/.github
-/build
-/coverage
-/examples
-/jsdoc
-/lib/__tests__
-/node_modules
-.eslintignore
-.eslintrc.json
-.gitignore
-jest.config.js
-README.md
-yarn.lock
+lib/__tests__
