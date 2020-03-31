@@ -8,7 +8,7 @@ const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?: *
 let source
 let destination
 let packageDependencies
-let nodeModules = 'node_modules'
+let nodeModules
 
 program
   .command('build')
@@ -38,9 +38,9 @@ program
 
 program.parse(process.argv)
 
-const entrypoints = new Map() // maps microservice names to entrypoint paths
+const entrypoints = new Map() // microserviceName => entrypointPath
 const dependencies = new Map() // fileName => (importName => path)
-const modules = new Map() // maps path to {node_modules}
+const modules = new Map() // maps path to { ...node_modules }
 
 /**
  * Start build
