@@ -7,6 +7,7 @@ const { program } = require('commander')
 let source
 let destination
 let packageDependencies
+let nodeModules = 'node_modules'
 
 program
   .command('build')
@@ -14,9 +15,11 @@ program
   .option('-s, --source [source]', 'the source folder of your application', 'src')
   .option('-d, --destination [destination]', 'where to build to', 'build')
   .option('-p, --package [package file]', 'which package.json file to use to get dependency versions', 'package.json')
+  .option('-m, --modules [node_modules]', 'where to look for node_modules', 'node_modules')
   .action(res => {
     source = res.source
     destination = res.destination
+    nodeModules = res.modules
     const start = Date.now();
     (async () => {
       packageDependencies = require(path.resolve(res.package)).dependencies
@@ -64,6 +67,7 @@ function startBuild () {
  * @param {String} directory - directory to scan
  */
 async function scanDirectory (directory) {
+  // if (directory.split(path.sep).reverse()[0] === '__tests__') return
   for await (const dirent of await fs.promises.opendir(directory)) {
     if (dirent.isDirectory()) await scanDirectory(path.resolve(directory, dirent.name))
     else if (dirent.isFile()) {
@@ -83,7 +87,7 @@ async function scanDirectory (directory) {
  */
 function resolveImport (file, imp, impName = imp) {
   try {
-    return require.resolve(imp)
+    return require.resolve(imp, { paths: [path.resolve(nodeModules)] })
   } catch (error) {
     if (error.code === 'MODULE_NOT_FOUND') throw new Error(`Import '${impName}' in ${file} could not be found`)
     throw error
@@ -109,7 +113,7 @@ async function scanFile (file) {
   const directory = path.dirname(file)
   // Loop through this file's dependencies and map them in modules/dependencies
   fileDependencies.forEach(depName => {
-    const isNodeModule = !depName.match(/[\\/.]/) && (resolveImport(file, depName) === depName || resolveImport(file, depName).includes('/node_modules/'))
+    const isNodeModule = !depName.match(/^[\\/.]/) && (resolveImport(file, depName) === depName || resolveImport(file, depName).includes('/node_modules/'))
     if (isNodeModule) {
       const knownModules = modules.get(file)
       if (knownModules) knownModules.add(depName)
