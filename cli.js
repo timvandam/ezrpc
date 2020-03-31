@@ -106,8 +106,39 @@ async function buildMicroService (name, entrypoint) {
   await fs.promises.mkdir(root)
   await fs.promises.mkdir(js)
   const { requiredFiles, requiredModules } = discoverRequirements(entrypoint)
-  const fileLocation = new Map() // oldPath => newPath
+  const fileLocations = new Map() // oldPath => newPath
   const writtenPaths = new Set() // {newPaths}
+
+  // Allocate new file locations
+  requiredFiles.forEach(file => {
+    let newLocation = fileLocations.get(file) || path.resolve(js, path.basename(file))
+    // Make sure the path has not been used yet
+    let i = 0
+    while (writtenPaths.has(newLocation)) {
+      newLocation = path.resolve(js, `${i++}-path.basename(file)`)
+    }
+    writtenPaths.add(newLocation)
+    fileLocations.set(file, newLocation)
+  })
+  const tasks = []
+  for (const [oldPath, newPath] of fileLocations.entries()) {
+    tasks.push(
+      fs.promises.readFile(oldPath, { encoding: 'utf8' })
+        .then(code => {
+          const imps = dependencyImports.get(oldPath)
+          if (imps) {
+            // TODO: replace imports
+            for (const [imp, impPath] of imps.entries()) {
+              const newImpPath = fileLocations.get(impPath)
+              const newImpName = `./${path.basename(newImpPath)}`
+              code = code.replace(new RegExp(imp, 'gi'), newImpName)
+            }
+          }
+          return fs.promises.writeFile(newPath, code)
+        })
+    )
+  }
+  await Promise.all(tasks)
   // TODO: write requiredFiles
   // TODO: write entrypoint
 }
