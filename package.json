@@ -41,8 +41,7 @@
   ],
   "dependencies": {
     "commander": "^5.0.0",
-    "debug": "^4.1.1",
-    "precinct": "^6.2.0"
+    "debug": "^4.1.1"
   },
   "files": [
     "lib",

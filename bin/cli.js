@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 const fs = require('fs')
 const path = require('path')
-const precinct = require('precinct')
 const { program } = require('commander')
+
+const getDependencies = code => Array.from(code.matchAll(/(?:require|import) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(e => e[1])
 
 let source
 let destination
@@ -22,7 +23,7 @@ program
     nodeModules = res.modules
     const start = Date.now();
     (async () => {
-      packageDependencies = require(path.resolve(res.package)).dependencies
+      packageDependencies = require(path.resolve(res.package)).dependencies || {}
     })()
       .then(() => startBuild())
       .then(() => {
@@ -67,14 +68,15 @@ function startBuild () {
  * @param {String} directory - directory to scan
  */
 async function scanDirectory (directory) {
-  // if (directory.split(path.sep).reverse()[0] === '__tests__') return
+  const tasks = []
   for await (const dirent of await fs.promises.opendir(directory)) {
-    if (dirent.isDirectory()) await scanDirectory(path.resolve(directory, dirent.name))
+    if (dirent.isDirectory()) tasks.push(scanDirectory(path.resolve(directory, dirent.name)))
     else if (dirent.isFile()) {
       const file = path.resolve(directory, dirent.name)
-      await scanFile(file)
+      tasks.push(scanFile(file))
     }
   }
+  await Promise.all(tasks)
 }
 
 /**
@@ -109,7 +111,7 @@ async function scanFile (file) {
     if (entrypoints.has(name)) throw new Error(`There are multiple microservices with the name '${name}'!`)
     entrypoints.set(name, file)
   }
-  const fileDependencies = precinct(code)
+  const fileDependencies = getDependencies(code)
   const directory = path.dirname(file)
   // Loop through this file's dependencies and map them in modules/dependencies
   fileDependencies.forEach(depName => {
@@ -127,7 +129,7 @@ async function scanFile (file) {
       const depPath = resolveImport(file, path.resolve(directory, depName), depName)
       const knownImports = dependencies.get(file)
       if (knownImports) knownImports.set(depName, depPath)
-      else dependencies.set(file, new Map().set(depName, depPath))
+      else dependencies.set(file, new Map([[depName, depPath]]))
     }
   })
 }
@@ -144,8 +146,11 @@ async function buildMicroService (name, entrypoint) {
   await fs.promises.mkdir(root)
   await fs.promises.mkdir(js)
   const { requiredFiles, requiredModules } = discoverRequirements(entrypoint)
-  await writeRequiredFiles(js, requiredFiles, entrypoint)
-  await writePackageJson(name, root, requiredModules)
+  console.log(requiredFiles)
+  await Promise.all([
+    writeRequiredFiles(js, requiredFiles, entrypoint),
+    writePackageJson(name, root, requiredModules)
+  ])
   console.log(`-- Build for ${name} succesful (${Date.now() - start} ms)`)
 }
 
@@ -173,7 +178,7 @@ async function writePackageJson (name, root, modules) {
  */
 function writeRequiredFiles (location, requiredFiles, entrypoint) {
   const mainPath = path.resolve(location, 'index.js')
-  const fileLocations = new Map().set(entrypoint, mainPath) // oldPath => newPath
+  const fileLocations = new Map([[entrypoint, mainPath]]) // oldPath => newPath
   const writtenPaths = new Set([mainPath]) // {newPaths}
 
   // Allocate new file locations
