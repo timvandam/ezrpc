@@ -3,12 +3,14 @@ const fs = require('fs')
 const path = require('path')
 const { program } = require('commander')
 
-const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?: *.+ *from *)?) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(e => e[1])
+const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?: *.+ *from *)?) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(group => group[1])
+const getEnvironmentVariables = code => Array.from(code.matchAll(/process\.env\.([A-Za-z0-9_]+)/g)).map(group => group[1])
 
 let source
 let destination
 let packageDependencies
 let nodeModules
+let env
 
 program
   .command('build')
@@ -17,10 +19,12 @@ program
   .option('-d, --destination [destination]', 'where to build to', 'build')
   .option('-p, --package [package file]', 'which package.json file to use to get dependency versions', 'package.json')
   .option('-m, --modules [node_modules]', 'where to look for node_modules', 'node_modules')
+  .option('-e, --env', 'whether to generate a .env with all encountered environment variables')
   .action(res => {
     source = res.source
     destination = res.destination
     nodeModules = res.modules
+    env = res.env
     const start = Date.now();
     (async () => {
       packageDependencies = require(path.resolve(res.package)).dependencies || {}
@@ -42,6 +46,7 @@ program.parse(process.argv)
 const entrypoints = new Map() // microserviceName => entrypointPath
 const dependencies = new Map() // fileName => (importName => path)
 const modules = new Map() // maps path to { ...node_modules }
+const environmentVariables = new Map() // fileName => { ...environment variables }
 
 /**
  * Start build
@@ -109,6 +114,15 @@ async function scanFile (file) {
     if (entrypoints.has(name)) throw new Error(`There are multiple microservices with the name '${name}'!`)
     entrypoints.set(name, file)
   }
+
+  // Find environment variables if needed
+  if (env) {
+    const envVars = getEnvironmentVariables(code)
+    const knownEnvVars = environmentVariables.get(file)
+    if (knownEnvVars) envVars.forEach(envVar => knownEnvVars.add(envVar))
+    else environmentVariables.set(file, new Set(envVars))
+  }
+
   const fileDependencies = getDependencies(code)
   const directory = path.dirname(file)
   // Loop through this file's dependencies and map them in modules/dependencies
@@ -143,14 +157,30 @@ async function buildMicroService (name, entrypoint) {
   const js = path.resolve(root, 'js')
   await fs.promises.mkdir(root)
   await fs.promises.mkdir(js)
-  const { requiredFiles, requiredModules } = discoverRequirements(entrypoint)
+  const { requiredFiles, requiredModules, requiredEnvironmentVariables } = discoverRequirements(entrypoint)
   await Promise.all([
     writeRequiredFiles(js, requiredFiles, entrypoint),
-    writePackageJson(name, root, requiredModules)
+    writePackageJson(name, root, requiredModules),
+    writeDotEnv(root, requiredEnvironmentVariables)
   ])
   console.log(`-- Build for ${name} succesful (${Date.now() - start} ms)`)
 }
 
+/**
+ * Generates & writes a .env file
+ * @param {String} root - where to write the .env (should be at the root)
+ * @param {Set} environmentVariables - which environment variables to write
+ */
+async function writeDotEnv (root, environmentVariables) {
+  return fs.promises.writeFile(path.resolve(root, '.env'), Array.from(environmentVariables).join('=\n'))
+}
+
+/**
+ * Generates & writes a package.json file
+ * @param {String} name - name of the microservice
+ * @param {String} root - where to place the package.json (should be at the root)
+ * @param {Set} modules - modules to add to the package.json
+ */
 async function writePackageJson (name, root, modules) {
   const dependencies = {}
   modules.forEach(dependency => {
@@ -216,10 +246,11 @@ function writeRequiredFiles (location, requiredFiles, entrypoint) {
  * @param {String} file - file to gather requirements for
  * @param {Set} [handledFiles=new Set()] - files that have already been checked
  * @param {Set} [requiredFiles=new Set()] - files that are required
- * @param {Set} [requiredModules=new Set()] - modulse that are required
- * @returns {{ requiredFiles: Set, requiredModules: Set }} set of required files & set of required modules
+ * @param {Set} [requiredModules=new Set()] - modules that are required
+ * @param {Set} [requiredEnvironmentVariables=new Set()] - required environment variables
+ * @returns {{ requiredFiles: Set, requiredModules: Set, requiredEnvironmentVariables: Set }} sets of discovered things
  */
-function discoverRequirements (file, handledFiles = new Set(), requiredFiles = new Set(), requiredModules = new Set()) {
+function discoverRequirements (file, handledFiles = new Set(), requiredFiles = new Set(), requiredModules = new Set(), requiredEnvironmentVariables = new Set()) {
   if (handledFiles.has(file)) return { requiredFiles, requiredModules }
   handledFiles.add(file)
 
@@ -229,7 +260,7 @@ function discoverRequirements (file, handledFiles = new Set(), requiredFiles = n
     reqs.forEach(req => {
       requiredFiles.add(req)
       // Recursively discover more requirements
-      discoverRequirements(req, handledFiles, requiredFiles, requiredModules)
+      discoverRequirements(req, handledFiles, requiredFiles, requiredModules, requiredEnvironmentVariables)
     })
   }
 
@@ -237,5 +268,9 @@ function discoverRequirements (file, handledFiles = new Set(), requiredFiles = n
   const mods = modules.get(file)
   if (mods) mods.forEach(mod => requiredModules.add(mod))
 
-  return { requiredFiles, requiredModules }
+  // Gather required environment variables
+  const envVars = environmentVariables.get(file)
+  if (envVars) envVars.forEach(envVar => requiredEnvironmentVariables.add(envVar))
+
+  return { requiredFiles, requiredModules, requiredEnvironmentVariables }
 }
