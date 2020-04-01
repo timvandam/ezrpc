@@ -45,7 +45,7 @@ program.parse(process.argv)
 
 const entrypoints = new Map() // microserviceName => entrypointPath
 const dependencies = new Map() // fileName => (importName => path)
-const modules = new Map() // maps path to { ...node_modules }
+const modules = new Map() // path => { ...node_modules }
 const environmentVariables = new Map() // fileName => { ...environment variables }
 
 /**
