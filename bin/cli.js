@@ -19,7 +19,7 @@ program
   .option('-d, --destination [destination]', 'where to build to', 'build')
   .option('-p, --package [package file]', 'which package.json file to use to get dependency versions', 'package.json')
   .option('-m, --modules [node_modules]', 'where to look for node_modules', 'node_modules')
-  .option('-e, --env', 'whether to generate a .env with all encountered environment variables')
+  .option('-e, --env', 'when used will generate a .env with all encountered environment variables')
   .action(res => {
     source = res.source
     destination = res.destination
