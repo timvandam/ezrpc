@@ -40,8 +40,7 @@ program
         process.exit(1)
       })
   })
-
-program.parse(process.argv)
+  .parse(process.argv)
 
 const entrypoints = new Map() // microserviceName => entrypointPath
 const dependencies = new Map() // fileName => (importName => path)
