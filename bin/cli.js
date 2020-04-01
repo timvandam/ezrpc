@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const { program } = require('commander')
 
-const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?: *.+ *from *)?) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(group => group[1])
+const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?:.+from.+)?) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(group => group[1])
 const getEnvironmentVariables = code => Array.from(code.matchAll(/process\.env\.([A-Za-z0-9_]+)/g)).map(group => group[1])
 
 let source
@@ -170,8 +170,10 @@ async function buildMicroService (name, entrypoint) {
  * Generates & writes a .env file
  * @param {String} root - where to write the .env (should be at the root)
  * @param {Set} environmentVariables - which environment variables to write
+ * @returns {Promise} promise that resolves when the file has been written
  */
-async function writeDotEnv (root, environmentVariables) {
+function writeDotEnv (root, environmentVariables) {
+  if (!env) return
   return fs.promises.writeFile(path.resolve(root, '.env'), Array.from(environmentVariables).join('=\n'))
 }
 
