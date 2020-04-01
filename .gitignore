@@ -1,4 +1,5 @@
 /node_modules
 /coverage
 /jsdoc
+/build
 yarn.lock

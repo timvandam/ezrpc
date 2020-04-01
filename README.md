@@ -39,7 +39,9 @@ helloWorld()
 - ezrpc servers can be used in almost any language
 
 ## Docs
-All code has been commented with JSDoc. To generate html documentation you can run the `doc` script:
+The [wiki](https://github.com/timvandam/ezrpc/wiki) will help you get started with `ezrpc`
+
+Additionally you can generate html documentation of all all method & properties using `jsdoc` using the `doc` script:
 
 `$ npm run doc`
 
@@ -48,6 +50,8 @@ All code has been commented with JSDoc. To generate html documentation you can r
 Documentation will appear in /jsdoc
 
 ## Tests
+Tests are not included when you download from npm; clone the GitHub repository to run tests.
+
 **npm**
 ```bash
 $ npm install
