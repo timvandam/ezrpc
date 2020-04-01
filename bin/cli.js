@@ -174,7 +174,9 @@ async function buildMicroService (name, entrypoint) {
  */
 function writeDotEnv (root, environmentVariables) {
   if (!env) return
-  return fs.promises.writeFile(path.resolve(root, '.env'), Array.from(environmentVariables).join('=\n'))
+  let data = Array.from(environmentVariables).join('=\n')
+  if (data) data += '='
+  return fs.promises.writeFile(path.resolve(root, '.env'), data)
 }
 
 /**
