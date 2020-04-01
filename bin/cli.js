@@ -233,7 +233,7 @@ function writeRequiredFiles (location, requiredFiles, entrypoint) {
             for (const [imp, impPath] of imps.entries()) {
               const newImpPath = fileLocations.get(impPath)
               const newImpName = `./${path.basename(newImpPath)}`
-              code = code.replace(new RegExp(imp, 'gi'), newImpName)
+              code = code.replace(new RegExp(`('|")${imp}('|")`, 'gi'), `'${newImpName}'`)
             }
           }
           return fs.promises.writeFile(newPath, code)
