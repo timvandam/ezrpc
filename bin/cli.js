@@ -2,6 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const { program } = require('commander')
+const { DuplicateEntrypointNameError } = require('ezerrors')
 
 const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?:.+from.+)?) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(group => group[1])
 const getEnvironmentVariables = code => Array.from(code.matchAll(/process\.env\.([A-Za-z0-9_]+)/g)).map(group => group[1])
@@ -94,7 +95,7 @@ function resolveImport (file, imp, impName = imp) {
   try {
     return require.resolve(imp, { paths: [path.resolve(nodeModules)] })
   } catch (error) {
-    if (error.code === 'MODULE_NOT_FOUND') throw new Error(`Import '${impName}' in ${file} could not be found`)
+    if (error.code === 'MODULE_NOT_FOUND') throw new ReferenceError(`Import '${impName}' in ${file} could not be found`)
     throw error
   }
 }
@@ -111,7 +112,7 @@ async function scanFile (file) {
   const isEntrypoint = code.match(/^\/\*\s*ezrpc-([a-z-]*)\s*\*\//i)
   if (isEntrypoint) {
     const name = isEntrypoint[1]
-    if (entrypoints.has(name)) throw new Error(`There are multiple microservices with the name '${name}'!`)
+    if (entrypoints.has(name)) throw new DuplicateEntrypointNameError(`There are multiple microservices with the name '${name}'!`)
     entrypoints.set(name, file)
   }
 
