@@ -1,6 +1,6 @@
 {
   "name": "ezrpc",
-  "version": "1.4.6",
+  "version": "1.5.0",
   "description": "Easy promise-based RPC over TCP",
   "main": "index.js",
   "author": "Tim van Dam",
