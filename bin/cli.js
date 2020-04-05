@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const { program } = require('commander')
 const { DuplicateEntrypointNameError } = require('ezerrors')
+const dotenv = require('dotenv')
 
 const getDependencies = code => Array.from(code.matchAll(/(?:require|import(?:.+from.+)?) *\(*(?:'|")([.\\@a-zA-Z-_0-9/]+)(?:'|")\)*/g)).map(group => group[1])
 const getEnvironmentVariables = code => Array.from(code.matchAll(/process\.env\.([A-Za-z0-9_]+)/g)).map(group => group[1])
@@ -20,16 +21,21 @@ program
   .option('-d, --destination [destination]', 'where to build to', 'build')
   .option('-p, --package [package file]', 'which package.json file to use to get dependency versions', 'package.json')
   .option('-m, --modules [node_modules]', 'where to look for node_modules', 'node_modules')
-  .option('-e, --env', 'when used will generate a .env with all encountered environment variables')
+  .option('-e, --env [.env]', 'generates a .env file with all encountered environment variables. Provide a file to automatically fill these in')
   .action(res => {
     source = res.source
     destination = res.destination
     nodeModules = res.modules
-    env = res.env
     const start = Date.now();
     (async () => {
       packageDependencies = require(path.resolve(res.package)).dependencies || {}
     })()
+      .then(() => typeof res.env === 'boolean'
+        ? Promise.resolve(env = res.env)
+        : fs.promises.readFile(path.resolve(res.env)).then(data => {
+          env = dotenv.parse(data)
+        })
+      )
       .then(() => startBuild())
       .then(() => {
         console.log(`\nBuild succeeded in ${Date.now() - start} ms`)
@@ -37,6 +43,7 @@ program
       })
       .catch(error => {
         if (error.code === 'MODULE_NOT_FOUND') console.log('The provided package.json could not be found')
+        if (error.code === 'ENOENT') console.log('The provided .env could not be found')
         else console.log(`Build failed: ${error.message}`)
         process.exit(1)
       })
@@ -175,8 +182,11 @@ async function buildMicroService (name, entrypoint) {
  */
 function writeDotEnv (root, environmentVariables) {
   if (!env) return
-  let data = Array.from(environmentVariables).join('=\n')
-  if (data) data += '='
+  let data = ''
+  environmentVariables.forEach(envVar => {
+    const value = env[envVar] || ''
+    data += `${envVar}=${value}\n`
+  })
   return fs.promises.writeFile(path.resolve(root, '.env'), data)
 }
 

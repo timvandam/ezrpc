@@ -42,6 +42,7 @@
   "dependencies": {
     "commander": "^5.0.0",
     "debug": "^4.1.1",
+    "dotenv": "^8.2.0",
     "ezerrors": "^1.0.0"
   },
   "files": [
